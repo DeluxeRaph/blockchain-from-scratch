@@ -42,7 +42,6 @@ impl StateMachine for ClothesMachine {
     fn next_state(starting_state: &ClothesState, t: &ClothesAction) -> ClothesState {
         // Tattered conditions
         match starting_state {
-            ClothesState::Tattered => return ClothesState::Tattered,
             ClothesState::Clean(1) | ClothesState::Dirty(1) | ClothesState::Wet(1) => return ClothesState::Tattered,
             _ => {}  
         }
