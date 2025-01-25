@@ -40,56 +40,55 @@ impl StateMachine for ClothesMachine {
     type Transition = ClothesAction;
 
     fn next_state(starting_state: &ClothesState, t: &ClothesAction) -> ClothesState {
-        // Tattered conditions
-        match starting_state {
-            ClothesState::Clean(1) | ClothesState::Dirty(1) | ClothesState::Wet(1) => return ClothesState::Tattered,
-            _ => {}  
+        // Returning early for tattered
+        if matches!(starting_state, ClothesState::Tattered){
+            return ClothesState::Tattered;
         }
 
+        let decrement_life = |life: u64| life.saturating_sub(1);
+
         match t {
-            ClothesAction::Wear => match starting_state {
-                
-                ClothesState::Clean(life) => {
-                    ClothesState::Dirty(life - 1)
+                ClothesAction::Wear => match starting_state {
+                    ClothesState::Clean(life) | ClothesState::Dirty(life) | ClothesState::Wet(life) => {
+                        let new_life = decrement_life(*life);
+                        if new_life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Dirty(new_life)
+                        }
+                    }
+                    _ => ClothesState::Tattered
+                },
+                ClothesAction::Wash => match starting_state {
+                    ClothesState::Clean(life) | ClothesState::Dirty(life) | ClothesState::Wet(life) => {
+                        let new_life = decrement_life(*life);
+                        if new_life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Wet(new_life)
+                        }
+                    }
+                    _ => ClothesState::Tattered
+                },
+                ClothesAction::Dry => match starting_state {
+                    ClothesState::Clean(life) | ClothesState::Wet(life) => {
+                        let new_life = decrement_life(*life);
+                        if new_life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Clean(new_life)
+                        }
+                    },
+                    ClothesState::Dirty(life) => {
+                        let new_life = decrement_life(*life);
+                        if new_life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Dirty(new_life)
+                        }
+                    }
+                    _ => ClothesState::Tattered
                 }
-                ClothesState::Dirty(life) => {
-                    ClothesState::Dirty(life - 1)
-                }
-                ClothesState::Wet(life) => {
-                    ClothesState::Dirty(life - 1)
-                }
-                ClothesState::Tattered => {
-                    ClothesState::Tattered
-                }
-            }
-            ClothesAction::Wash => match starting_state {
-                ClothesState::Clean(life) => {
-                    ClothesState::Wet(life - 1)
-                }
-                ClothesState::Dirty(life) => {
-                    ClothesState::Wet(life - 1)
-                }
-                ClothesState::Wet(life) => {
-                    ClothesState::Wet(life - 1)
-                }
-                ClothesState::Tattered => {
-                    ClothesState::Tattered
-                }
-            }
-            ClothesAction::Dry => match starting_state {
-                ClothesState::Clean(life) => {
-                    ClothesState::Clean(life - 1)
-                }
-                ClothesState::Dirty(life) => {
-                    ClothesState::Dirty(life - 1)
-                }
-                ClothesState::Wet(life) => {
-                    ClothesState::Clean(life - 1)
-                }
-                ClothesState::Tattered => {
-                    ClothesState::Tattered
-                }
-            }
             }
         }
     }
